@@ -16,6 +16,7 @@ parser.add_argument("--symbols", required=True, type=str, nargs="*")
 parser.add_argument("--v_name", default="size", type=str)
 parser.add_argument("--v_thresholds", required=True, type=int, nargs="*")
 args = parser.parse_args()
+
 def torch_np_fix_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -143,6 +144,21 @@ class Pointprocess_Dataset(Dataset):
         input_tensor = torch.from_numpy(input_arr.astype(np.float32))   # (coin_num, point_num, feature_num)
         target_tensor = torch.from_numpy(target_arr.astype(np.float32)) # (coin_num, future_seconds)
         return input_tensor, target_tensor
+
+def make_datasets(symbols, start_dates, end_dates,
+                  point_num=60, future_seconds=60):
+    all_dfs = [[]*len(start_dates)]
+    csvs_path = root_path / "dataframes"
+    for symbol in symbols:
+        for i in range(len(start_dates)):
+            start_date = str(start_dates[i])
+            end_date = str(end_dates[i])
+            csv_path = csvs_path / f"pointprocess_{symbol}_{start_date}_{end_date}.csv"
+            all_dfs[i].append(pd.read_csv(str(csv_path), index_col=0))
+    datasets = []
+    for dfs in all_dfs:
+        datasets.append(Pointprocess_Dataset(dfs, point_num, future_seconds))
+    return datasets
 
 if __name__ == "__main__":
     start_dates = args.start_dates
