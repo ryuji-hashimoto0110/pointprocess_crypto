@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, time
 import gzip
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ parser.add_argument("--start_dates", required=True, type=str, args="*")
 parser.add_argument("--end_dates", required=True, type=str, args="*")
 parser.add_argument("--symbols", required=True, type=str, nargs="*")
 parser.add_argument("--v_name", default="size", type=str)
-parser.add_argument("--v_thresholds", required=True, type=float, nargs="*")
+parser.add_argument("--v_thresholds", required=True, type=int, nargs="*")
 args = parser.parse_args()
 def torch_np_fix_seed(seed):
     np.random.seed(seed)
@@ -88,12 +88,17 @@ def save_pointprocess_dfs(start_dates, end_dates,
                                                         end_datetime,
                                                         v_name,
                                                         v_threshold_dic[symbol])
+            contract_csv_name = f"contract_{symbol}_{str(start_date)}_{str(end_date)}.csv"                                          
             pointprocess_csv_name = f"pointprocess_{symbol}_{str(start_date)}_{str(end_date)}.csv"
             if not save_csvs_path.exists():
                 save_csvs_path.mkdir(parents=True)
-            pointprocess_csv_path = save_csvs_path / pointprocess_csv_name    
+            contract_csv_path = save_csvs_path / contract_csv_name  
+            pointprocess_csv_path = save_csvs_path / pointprocess_csv_name  
+            contract_df.to_csv(str(contract_csv_path), index=True)
             pointprocess_df.to_csv(str(pointprocess_csv_path), index=True)
+            print(f"Data saved to >> {str(contract_csv_path)}")
             print(f"Data saved to >> {str(pointprocess_csv_path)}")
+            print()
     return
 
 class Pointprocess_Dataset(Dataset):
@@ -153,4 +158,3 @@ if __name__ == '__main__':
     save_csvs_path = root_path / "dataframes"
     save_pointprocess_dfs(start_dates, end_dates, symbols, 
                           v_name, v_threshold_dic, save_csvs_path)
-                          
