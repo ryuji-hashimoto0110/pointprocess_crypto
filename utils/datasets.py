@@ -144,7 +144,7 @@ class Pointprocess_Dataset(Dataset):
         target_tensor = torch.from_numpy(target_arr.astype(np.float32)) # (coin_num, future_seconds)
         return input_tensor, target_tensor
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start_dates = args.start_dates
     start_dates = [datetime.strptime(x, "%Y/%m/%d").date() for x in start_dates]
     end_dates = args.end_dates
