@@ -113,8 +113,9 @@ class PointFormer(nn.Module):
         return out
 
 class PointRNN(nn.Module):
-    def __init__(self, device,
-                 coin_num, point_num, feature_num, future_seconds, hidden_size):
+    def __init__(self, 
+                 coin_num, feature_num, point_num,
+                 future_seconds, hidden_size, device):
         super(PointRNN, self).__init__()
         self.device = device
         self.coin_num = coin_num
