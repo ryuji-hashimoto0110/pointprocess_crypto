@@ -4,18 +4,13 @@ import gzip
 import numpy as np
 import pandas as pd
 import pathlib
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 from urllib import request
 import time as t
 import torch
 from torch.utils.data import Dataset
 root_path = pathlib.Path("")
-parser = argparse.ArgumentParser()
-parser.add_argument("--start_dates", required=True, type=str, args="*")
-parser.add_argument("--end_dates", required=True, type=str, args="*")
-parser.add_argument("--symbols", required=True, type=str, nargs="*")
-parser.add_argument("--v_name", default="size", type=str)
-parser.add_argument("--v_thresholds", required=True, type=int, nargs="*")
-args = parser.parse_args()
 
 def torch_np_fix_seed(seed):
     np.random.seed(seed)
@@ -68,8 +63,10 @@ def make_pointprocess_from_contract_data(contract_df,
             break
         v = contract_df_selected[v_name][i]
         p = contract_df_selected["price"][i]
-        record = pd.Series([dt_now, t,h,v,p], index=cols)
-        pointprocess_df = pointprocess_df.append(record, ignore_index=True)
+        record = pd.Series([dt_now,t,h,v,p], index=cols)
+        pointprocess_df = pd.concat([pointprocess_df, 
+                                     pd.DataFrame([record])],
+                                     ignore_index=True)
     pointprocess_df.set_index("timestamp", inplace=True)
     return pointprocess_df
 
@@ -158,9 +155,16 @@ def make_datasets(symbols, start_dates, end_dates,
     datasets = []
     for dfs in all_dfs:
         datasets.append(Pointprocess_Dataset(dfs, point_num, future_seconds))
-    return datasets
+    return datasets, all_dfs
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--start_dates", required=True, type=str, nargs="*")
+    parser.add_argument("--end_dates", required=True, type=str, nargs="*")
+    parser.add_argument("--symbols", required=True, type=str, nargs="*")
+    parser.add_argument("--v_name", default="size", type=str)
+    parser.add_argument("--v_thresholds", required=True, type=int, nargs="*")
+    args = parser.parse_args()
     start_dates = args.start_dates
     start_dates = [datetime.strptime(x, "%Y/%m/%d").date() for x in start_dates]
     end_dates = args.end_dates

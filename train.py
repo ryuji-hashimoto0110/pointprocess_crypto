@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime, timedelta, time
+from datetime import datetime
 from models import PointFormer, PointRNN
 import numpy as np
 import pathlib
@@ -9,6 +9,7 @@ from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from utils.datasets import torch_np_fix_seed, make_datasets
+from utils.losses import Window_Loss
 root_path = pathlib.Path("")
 torch_np_fix_seed(1111)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,35 +25,10 @@ parser.add_argument("--window_size", default=10, type=int)
 parser.add_argument("--batch_size", default=256, type=int)
 parser.add_argument("--num_epoch", default=100, type=int)
 parser.add_argument("--num_workers", default=2, type=int)
-parser.add_argument("--start_dates", required=True, type=str, args="*")
-parser.add_argument("--end_dates", required=True, type=str, args="*")
+parser.add_argument("--start_dates", required=True, type=str, nargs="*")
+parser.add_argument("--end_dates", required=True, type=str, nargs="*")
 parser.add_argument("--symbols", required=True, type=str, nargs="*")
 args = parser.parse_args()
-
-class Window_Loss(nn.Module):
-    def __init__(self, window_size, future_seconds, device):
-        super(Window_Loss, self).__init__()
-        self.window_size = window_size
-        window = np.ones((future_seconds-window_size+1,
-                          future_seconds))
-        window -= np.triu(window, k=window_size)
-        window -= np.tril(window, k=-1)
-        self.window = torch.from_numpy(window.astype(np.float32)).to(device)
-        self.device = device
-        self.mseloss = nn.MSELoss(reduction="none")
-    
-    def forward(self, x, y): # (b, coin_num, future_seconds)
-        b, coin_num, future_seconds = x.shape
-        x_ma = torch.einsum('wT,bcT -> bcw', self.window, x) \
-               / self.window_size # (b, coin_num, future_seconds-window_size+1)
-        y_ma = torch.einsum('wT,bcT -> bcw', self.window, y) \
-               / self.window_size
-        x_ma = x_ma.view(b*coin_num,-1)
-        y_ma = y_ma.view(b*coin_num,-1)
-        y_ma_ = torch.softmax(y_ma, dim=1)
-        window_loss = torch.sum(self.mseloss(x_ma,y_ma) * y_ma_)\
-                      / (future_seconds - self.window_size + 1)
-        return window_loss
 
 def train(model, future_seconds, 
           load_path, best_save_path, last_save_path, learning_rate,
@@ -109,7 +85,7 @@ def train(model, future_seconds,
             targets = targets.to("cpu")
             outputs = outputs.to("cpu")
         train_loss = np.sqrt(train_loss)
-        train_losses.append(np.sqrt(train_loss))
+        train_losses.append(train_loss)
         train_time_end = t.time()
         valid_loss = 0
         valid_time_start = t.time()
@@ -126,7 +102,7 @@ def train(model, future_seconds,
                 targets = targets.to("cpu")
                 outputs = outputs.to("cpu")
         valid_loss = np.sqrt(valid_loss)
-        valid_losses.append(np.sqrt(valid_loss))
+        valid_losses.append(valid_loss)
         valid_time_end = t.time()
         train_time_total = train_time_end - train_time_start
         valid_time_total = valid_time_end - valid_time_start
@@ -163,20 +139,22 @@ if __name__ == "__main__":
     coin_num = len(symbols)
     point_num = args.point_num
     future_seconds = args.future_seconds
-    datasets = make_datasets(symbols, start_dates, end_dates,
-                             point_num, future_seconds)
+    datasets, _ = make_datasets(symbols, start_dates, end_dates,
+                                point_num, future_seconds)
     train_dataset = datasets[0]
     valid_dataset = datasets[1]
     model_name = args.model
     if model_name == "PointFormer":
         model = PointFormer(coin_num=coin_num,
-                            feature_num=4, point_num=point_num,
+                            feature_num=4, 
+                            point_num=point_num,
                             d_model=4, d_ff=2, d_ff2=2, 
                             future_seconds=future_seconds,
-                            nhead1=4, nhead2=4, device=device)
+                            nhead1=4, device=device)
     elif model_name == "PointRNN":
         model = PointRNN(coin_num=coin_num,
-                         feature_num=4, point_num=60, future_seconds=60,
+                         feature_num=4, 
+                         point_num=point_num, future_seconds=future_seconds,
                          hidden_size=12, device=device)
     else:
         try:
@@ -188,7 +166,7 @@ if __name__ == "__main__":
     if load_name is not None:
         load_path = checkpoints_path / load_name
     else:
-        load_parh = None
+        load_path = None
     best_save_name = args.best_save_name
     best_save_path = checkpoints_path / best_save_name
     last_save_name = args.last_save_name

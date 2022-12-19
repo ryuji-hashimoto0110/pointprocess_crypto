@@ -7,15 +7,12 @@ import numpy as np
 import pathlib
 from utils.datasets import bybit_load_contract_data, make_pointprocess_from_contract_data
 root_path = pathlib.Path("")
-root_path = pathlib.Path("")
 parser = argparse.ArgumentParser()
 parser.add_argument("--start_date", required=True, type=str)
 parser.add_argument("--end_date", required=True, type=str)
 parser.add_argument("--symbol", required=True, type=str)
 parser.add_argument("--v_name", default="size", type=str)
 parser.add_argument("--v_threshold", required=True, type=int)
-parser.add_argument("--save_imgs_name", required=True, type=str)
-parser.add_argument("--save_arrs_name", required=True, type=str)
 args = parser.parse_args()
 
 def np_sigmoid(x):
@@ -65,12 +62,12 @@ def stochastic_declustering(save_imgs_path,
                             v_name="size", v_threshold=150000,
                             pointprocess_df=None,
                             contract_df=None, 
-                            iter_num=20,
+                            iter_num=2,
                             background_prior=0.5):
-    if contract_df is None:
-        contract_df = bybit_load_contract_data(start_date, end_date, symbol)
     start_datetime = datetime.combine(start_date, time())
     end_datetime = datetime.combine(end_date+timedelta(days=1), time())
+    if contract_df is None:
+        contract_df = bybit_load_contract_data(start_date, end_date, symbol)
     if pointprocess_df is None:
         pointprocess_df = make_pointprocess_from_contract_data(
             contract_df, start_datetime, end_datetime, v_name, v_threshold
@@ -115,6 +112,8 @@ def stochastic_declustering(save_imgs_path,
               f"[Aftershock num]{len(aftershock_arr)} " +
               f"[band_width](mu){band_width_mu:.2f}, (g){band_width_g:.2f}")
         P = P_
+    if not save_arrs_path.exists():
+        save_arrs_path.mkdir(parents=True)
     mu_save_path = save_arrs_path / "mu"
     np.save(str(mu_save_path), mu)
     g_save_path = save_arrs_path / "g"
@@ -127,6 +126,8 @@ def stochastic_declustering(save_imgs_path,
             marker="", markersize=6, color="black", label="P error")
     ax.legend(loc="upper right")
     ax.set(xlabel="epoch", ylabel="error")
+    if not save_imgs_path.exists():
+        save_imgs_path.mkdir(parents=True)
     p_err_img_path = save_imgs_path / "p_err.png"
     plt.savefig(str(p_err_img_path))
     plt.close(fig)
@@ -144,8 +145,8 @@ def stochastic_declustering(save_imgs_path,
     ax1.set_ylabel(f"Volume (USD)")
     ax1.set_title(f"Transaction records of {symbol} on Bybit (2022)")
     # ax2 mu
-    dates_list = [start_datetime + timedelta(seconds) for seconds in \
-                  (end_datetime - start_datetime).seconds]
+    dates_list = [start_datetime + timedelta(seconds=seconds) for seconds in \
+                  range(int((end_datetime - start_datetime).total_seconds()))]
     t_vec_mu = np.arange(len(dates_list))[:,np.newaxis]
     mu_arr = mu.calc_density(t_vec_mu)
     ax2 = fig.add_subplot(3,1,2)
@@ -155,7 +156,7 @@ def stochastic_declustering(save_imgs_path,
     ax2.set_ylabel("Density")
     ax2.set_title("Estimated mu")
     # ax3 g
-    t_vec_g = np.arange(60*30)[:,np.newqxis]
+    t_vec_g = np.arange(60*30)[:,np.newaxis]
     g_arr = g.calc_density(t_vec_g)
     ax3 = fig.add_subplot(3,1,3)
     ax3.plot(t_vec_g, g_arr, color="black")
@@ -175,10 +176,8 @@ if __name__ == "__main__":
     symbol = args.symbol
     v_name = args.v_name
     v_threshold = args.v_threshold
-    save_imgs_name = args.save_imgs_name
-    save_imgs_path = root_path / save_imgs_name
-    save_arrs_name = args.save_arrs_name
-    save_arrs_path = root_path / save_arrs_name
+    save_imgs_path = root_path / "images"
+    save_arrs_path = root_path / "checkpoints"
     stochastic_declustering(save_imgs_path,
                             save_arrs_path,
                             start_date, end_date, symbol,

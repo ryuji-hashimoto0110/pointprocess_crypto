@@ -31,13 +31,13 @@ class FFN(nn.Module):
         return self.linear2(self.dropout(F.relu(self.linear1(x))))
 
 class Self_Exciting_Transformer(nn.Module):
-    def __init__(self, coin_num, d_ff, d_model, feature_num, point_num, nhead, device):
+    def __init__(self, coin_num, d_ff, d_model, feature_num, nhead, device):
         super(Self_Exciting_Transformer, self).__init__()
         self.coin_num = coin_num
         ffn = FFN(feature_num, d_ff, d_model)
         self.set_module_list = nn.ModuleList([])
         for _ in range(coin_num):
-            pos = PositionalEncoding(point_num, feature_num, device)
+            pos = PositionalEncoding(feature_num, device)
             encoder_layer = nn.TransformerEncoderLayer(d_model=feature_num, 
                                                        nhead=nhead)
             transformer_encoder = nn.TransformerEncoder(encoder_layer, 
@@ -59,32 +59,14 @@ class Self_Exciting_Transformer(nn.Module):
         out = out.view(-1, self.coin_num, d_model2) # (b, coin_num, point_num*d_model)
         return out
 
-class Relation_Transformer(nn.Module):
-    def __init__(self, coin_num, d_model2, d_ff2, feature_num,
-                 future_seconds, nhead, device):
-        super(Relation_Transformer, self).__init__()
-        self.coin_num = coin_num
-        self.future_seconds = future_seconds
-        self.feature_num = feature_num
-        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model2, 
-                                                   nhead=nhead)
-        transformer_encoder = nn.TransformerEncoder(encoder_layer, 
-                                                    num_layers=1)
-        #ffn = FFN(d_model2, d_ff2, future_seconds*feature_num)
-        self.rt_module = transformer_encoder
-
-    def forward(self, x): # (b, coin_num, d_model2=point_num*d_model)
-        out = self.rt_module(x) # (b, coin_num, d_model2)
-        return out
-
 class PointFormer(nn.Module):
     def __init__(self, 
                  coin_num, feature_num, point_num, d_model, d_ff, d_ff2, 
-                 future_seconds, nhead1, nhead2, device):
+                 future_seconds, nhead1, device):
         super(PointFormer, self).__init__()
         self.coin_num = coin_num
         self.setm = Self_Exciting_Transformer(coin_num, d_ff, d_model, 
-                                              feature_num, point_num,
+                                              feature_num, 
                                               nhead1, device)
         d_model2 = point_num * d_model
         #self.rtm = Relation_Transformer(coin_num, d_model2, d_ff2, 
