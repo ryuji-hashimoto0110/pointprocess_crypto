@@ -9,7 +9,6 @@ import pandas as pd
 import pathlib
 import torch
 from torch.utils.data import DataLoader
-import sys
 root_path = pathlib.Path("")
 from utils.datasets import make_datasets
 from utils.losses import Window_Loss
@@ -140,7 +139,7 @@ def make_prediction(model, test_pointprocess_dfs,
     prediction_img_path = save_imgs_path / pred_times_name
     plt.savefig(str(prediction_img_path))
     plt.close(fig)
-    xloc = mdates.MinuteLocator(byminute=10)
+    xloc = mdates.HourLocator()
     sub_pred_times = pred_times[(sub_start_datetime < pred_times.index) & \
                                 (pred_times.index < sub_end_datetime)]
     fig = plt.figure(figsize=(8,20), dpi=100, facecolor="w")
