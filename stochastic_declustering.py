@@ -62,7 +62,7 @@ def stochastic_declustering(save_imgs_path,
                             v_name="size", v_threshold=150000,
                             pointprocess_df=None,
                             contract_df=None, 
-                            iter_num=2,
+                            iter_num=20,
                             background_prior=0.5):
     start_datetime = datetime.combine(start_date, time())
     end_datetime = datetime.combine(end_date+timedelta(days=1), time())
