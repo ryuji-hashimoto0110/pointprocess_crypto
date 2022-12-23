@@ -155,6 +155,7 @@ def make_prediction(model, test_pointprocess_dfs,
                  linewidth=0.5, label="intensity")
         ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
         ax1.xaxis.set_major_locator(xloc)
+        ax1.xaxis.set_major_formatter(xfmt)   
         ax1.set_ylabel("Volume (USD)")
         ax1.set_title(symbol)
         ax2.set_ylim(np.min(sub_pred_times[symbol]), 

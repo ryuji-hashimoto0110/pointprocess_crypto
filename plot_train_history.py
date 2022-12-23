@@ -10,7 +10,7 @@ parser.add_argument("--load_names",
 parser.add_argument("--model_names",
                     required=True, type=str, nargs="*")
 parser.add_argument("--save_img_name", type=str,
-                    default="losses_plot.png")
+                    default="losses_plot.pdf")
 args = parser.parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

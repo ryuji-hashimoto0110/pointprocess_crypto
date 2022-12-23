@@ -128,7 +128,7 @@ def stochastic_declustering(save_imgs_path,
     ax.set(xlabel="epoch", ylabel="error")
     if not save_imgs_path.exists():
         save_imgs_path.mkdir(parents=True)
-    p_err_img_path = save_imgs_path / "p_err.png"
+    p_err_img_path = save_imgs_path / "p_err.pdf"
     plt.savefig(str(p_err_img_path))
     plt.close(fig)
     xfmt = mdates.DateFormatter("%m/%d")
@@ -165,7 +165,7 @@ def stochastic_declustering(save_imgs_path,
     ax3.set_xlabel("minute")
     ax3.set_ylabel("Density")
     ax3.set_title("Estimated g")
-    mug_estimate_img_path = save_imgs_path / "mug_estimate.png"
+    mug_estimate_img_path = save_imgs_path / "mug_estimate.pdf"
     plt.savefig(str(mug_estimate_img_path))
     plt.close(fig) 
     return 
