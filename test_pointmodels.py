@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, time
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from models import PointFormer, PointRNN
+from models import PointFormer, PointRNN, PointLSTM
 import numpy as np
 import pandas as pd
 import pathlib
@@ -193,9 +193,13 @@ if __name__ == "__main__":
                          feature_num=4, 
                          point_num=point_num, future_seconds=future_seconds,
                          hidden_size=12, device=device)
+    elif model_name =="PointLSTM":
+        pointlstm = PointLSTM(coin_num=coin_num,
+                              feature_num=4, point_num=point_num, future_seconds=future_seconds,
+                              hidden_size=12, device=device)
     else:
         try:
-            raise ValueError("model name must be PointFormer or PointRNN.")
+            raise ValueError("model name must be PointFormer, PointRNN or PointLSTM.")
         except ValueError as e:
             print(e)
     checkpoints_path = root_path / "checkpoints"

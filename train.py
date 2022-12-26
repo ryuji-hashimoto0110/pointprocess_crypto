@@ -1,6 +1,6 @@
 import argparse
 from datetime import datetime
-from models import PointFormer, PointRNN
+from models import PointFormer, PointRNN, PointLSTM
 import numpy as np
 import pathlib
 import time as t
@@ -156,6 +156,10 @@ if __name__ == "__main__":
                          feature_num=4, 
                          point_num=point_num, future_seconds=future_seconds,
                          hidden_size=12, device=device)
+    elif model_name =="PointLSTM":
+        pointlstm = PointLSTM(coin_num=coin_num,
+                              feature_num=4, point_num=point_num, future_seconds=future_seconds,
+                              hidden_size=12, device=device)
     else:
         try:
             raise ValueError("model name must be PointFormer or PointRNN.")

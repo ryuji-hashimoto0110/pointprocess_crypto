@@ -124,3 +124,34 @@ class PointRNN(nn.Module):
         out = torch.cat(coin_list, dim=1) # (b, coin_num, hidden_size)
         out = torch.sigmoid(self.ffn_time(out))
         return out
+
+class PointLSTM(nn.Module):
+    def __init__(self, device,
+                 coin_num, feature_num, point_num, future_seconds, hidden_size):
+        super(PointLSTM, self).__init__()
+        self.device = device
+        self.coin_num = coin_num
+        self.point_num = point_num
+        self.feature_num = feature_num
+        self.future_seconds = future_seconds
+        self.hidden_size = hidden_size
+        self.lstm_list = nn.ModuleList([])
+        for _ in range(coin_num):
+            lstm = nn.LSTM(input_size=feature_num,
+                           hidden_size=hidden_size,
+                           num_layers=2, dropout=0.1, batch_first=True)
+            self.lstm_list.append(lstm)
+        self.ffn_time = FFN(hidden_size, hidden_size, future_seconds)
+
+    def forward(self, x): # (b, coin_num, point_num, feature_num)
+        b, _, _, _ = x.shape
+        h_0 = torch.zeros(2,b,self.hidden_size).to(self.device)
+        c_0 = torch.zeros(2,b,self.hidden_size).to(self.device)
+        coin_list = []
+        for i in range(self.coin_num):
+            coin_feature, _ = self.lstm_list[i](x[:,i,:,:]) # (b,point_num,hidden_size)
+            coin_feature = coin_feature[:,-1,:].unsqueeze(dim=1)
+            coin_list.append(coin_feature)
+        out = torch.cat(coin_list, dim=1) # (b, coin_num, hidden_size)
+        out = torch.sigmoid(self.ffn_time(out))
+        return out
