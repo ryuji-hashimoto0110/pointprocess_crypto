@@ -15,7 +15,7 @@ python stochastic_declustering.py --start_date 2022/3/1 --end_date 2022/3/3 --sy
 ## train.py
 
 ```
-python train.py - -model PointFormer - -load_name pointformer_last.tar - -best_save_name pointformer_best.tar - -last_save_name pointformer_last.tar --start_dates 2022/9/1 2022/11/15 - -end_dates 2022/11/14 2022/11/30 - -symbols BTCUSD ETHUSD XRPUSD
+python train.py --model PointFormer --load_name pointformer_last.tar --best_save_name pointformer_best.tar --last_save_name pointformer_last.tar --start_dates 2022/9/1 2022/11/15 --end_dates 2022/11/14 2022/11/30 --symbols BTCUSD ETHUSD XRPUSD
 ```
 
 ## plot_train_history.py
