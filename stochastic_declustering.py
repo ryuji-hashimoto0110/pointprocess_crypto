@@ -125,6 +125,7 @@ def stochastic_declustering(save_imgs_path,
     ax.plot(P_err_list,
             marker="", markersize=6, color="black", label="P error")
     ax.legend(loc="upper right")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set(xlabel="epoch", ylabel="error")
     if not save_imgs_path.exists():
         save_imgs_path.mkdir(parents=True)
@@ -133,9 +134,9 @@ def stochastic_declustering(save_imgs_path,
     plt.close(fig)
     xfmt = mdates.DateFormatter("%m/%d")
     xloc = mdates.DayLocator()
-    fig = plt.figure(figsize=(8,11), dpi=100, facecolor="w")
+    fig = plt.figure(figsize=(14,22), dpi=50, facecolor="w")
     # ax1 contract_df bar 
-    ax1 = fig.add_subplot(3,1,1)
+    ax1 = fig.add_subplot(4,1,1)
     contract_df_selected = contract_df[contract_df[v_name]>v_threshold]
     ax1.bar(contract_df_selected.index, contract_df_selected[v_name],
             width=0.002, color="black")
@@ -149,7 +150,7 @@ def stochastic_declustering(save_imgs_path,
                   range(int((end_datetime - start_datetime).total_seconds()))]
     t_vec_mu = np.arange(len(dates_list))[:,np.newaxis]
     mu_arr = mu.calc_density(t_vec_mu)
-    ax2 = fig.add_subplot(3,1,2)
+    ax2 = fig.add_subplot(4,1,2)
     ax2.plot(dates_list, mu_arr, color="black")
     ax2.xaxis.set_major_locator(xloc)
     ax2.xaxis.set_major_formatter(xfmt)
@@ -158,13 +159,26 @@ def stochastic_declustering(save_imgs_path,
     # ax3 g
     t_vec_g = np.arange(60*30)[:,np.newaxis]
     g_arr = g.calc_density(t_vec_g)
-    ax3 = fig.add_subplot(3,1,3)
+    ax3 = fig.add_subplot(4,1,3)
     ax3.plot(t_vec_g, g_arr, color="black")
     ax3.set_xticks(np.arange(0, 60*31, 60*10))
     ax3.set_xticklabels(["0", "10", "20", "30"])
     ax3.set_xlabel("minute")
     ax3.set_ylabel("Density")
     ax3.set_title("Estimated g")
+    # ax4 lambda
+    t_vec_gs = t_vec_mu - pointprocess_arr.T
+    lambda_arr = np.zeros_like(mu_arr)
+    for i in range(len(lambda_arr)):
+        t_vec_g = t_vec_gs[i,:]
+        t_vec_g = t_vec_g[np.where(t_vec_g>0)][:,np.newaxis]
+        lambda_arr[i] = mu_arr[i] + np.sum(g.calc_density(t_vec_g))
+    ax4 = fig.add_subplot(4,1,4)
+    ax4.plot(dates_list, lambda_arr, color="black", linewidth=0.3)
+    ax4.xaxis.set_major_locator(xloc)
+    ax4.xaxis.set_major_formatter(xfmt)
+    ax4.set_ylabel("intensity")
+    ax4.set_title("Estimated lambda")
     mug_estimate_img_path = save_imgs_path / "mug_estimate.pdf"
     plt.savefig(str(mug_estimate_img_path))
     plt.close(fig) 
