@@ -35,6 +35,7 @@ args = parser.parse_args()
 def test(model, test_dataset, future_seconds, window_size, batch_size, num_workers, 
          device, total_loss_save_path, loss_list_save_path, cut_time_num=3):
     test_n = len(test_dataset)
+    print(test_n)
     test_dataloader = DataLoader(test_dataset,
                                  batch_size=batch_size,
                                  shuffle=False,
@@ -85,14 +86,13 @@ def make_prediction(model, test_pointprocess_dfs,
     for c in range(coin_num):
         coin_name = symbols[c]
         test_pp_df = test_pointprocess_dfs[c]
-        test_pp_df = test_pp_df[
-            str(start_datetime+timedelta(seconds=future_seconds)):\
-            str(start_datetime+timedelta(seconds=end_sec-start_sec-future_seconds*2))
-        ]
+        test_pp_df.index = pd.to_datetime(test_pp_df.index)
+        start = str(start_datetime+timedelta(seconds=future_seconds))
+        end =  str(start_datetime+timedelta(seconds=end_sec-start_sec-future_seconds*2))
+        test_pp_df = test_pp_df[start:end]
         target_df = test_pp_df["volume"]
-        target_df.index = pd.to_datetime(target_df.index)
         target_df.rename("volume")
-        target_csv_path = result_path / f"target_df_{coin_name}.csv"
+        target_csv_path = result_path / f"target_df_{start}_{end}_{coin_name}.csv"
         target_df.to_csv(str(target_csv_path), index=True)
         target_dfs.append(target_df)
     pred_times = np.zeros([int(end_sec-start_sec),coin_num])
@@ -114,8 +114,6 @@ def make_prediction(model, test_pointprocess_dfs,
     pred_times = pred_times[future_seconds:-future_seconds,:]
     times_idxes = times_idxes[future_seconds:-future_seconds]
     pred_times = pd.DataFrame(pred_times, columns=symbols, index=times_idxes)
-    pred_times_csv_path = result_path / pred_times_name
-    pred_times.to_csv(str(pred_times_csv_path), index=True)
     xfmt = mdates.DateFormatter("%m/%d\n%H:%M")
     xloc = mdates.DayLocator()
     fig = plt.figure(figsize=(8,20), dpi=100, facecolor="w")
@@ -194,9 +192,9 @@ if __name__ == "__main__":
                          point_num=point_num, future_seconds=future_seconds,
                          hidden_size=12, device=device)
     elif model_name =="PointLSTM":
-        pointlstm = PointLSTM(coin_num=coin_num,
-                              feature_num=4, point_num=point_num, future_seconds=future_seconds,
-                              hidden_size=12, device=device)
+        model = PointLSTM(coin_num=coin_num,
+                          feature_num=4, point_num=point_num, future_seconds=future_seconds,
+                          hidden_size=12, device=device)
     else:
         try:
             raise ValueError("model name must be PointFormer, PointRNN or PointLSTM.")
