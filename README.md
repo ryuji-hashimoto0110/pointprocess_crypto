@@ -16,6 +16,22 @@ pointprocess_crypto
   |-train.py
 ```
 
+# checkpoints
+
+checkpointsフォルダには，確率的デクラスタリングにおける$g,\mu,P$や，PointFormer，PointRNN，PointLSTMの学習済みパラメータが保存されている．実験結果は，[こちら](https://drive.google.com/drive/folders/1TaEJFAmxQYpf3wJpL0rhBCEmTB-gw0LN?usp=share_link)からダウンロードできる．
+
+# dataframes
+
+dataframesフォルダには，utils/datasets.pyを実行することによって得られる，bybitからダウンロード・加工した約定データや点過程データが保存されている．実験で使用したファイルは[こちら](https://drive.google.com/drive/folders/1IuvWkJlHV-DXOtxZYxp2uFZX7XVsUkQD?usp=share_link)からダウンロードできる．
+
+# images
+
+学習中の損失関数の推移のプロットやモデルの推論結果のプロットなどの画像が保存されている．overall_architecture.pdfをはじめ，論文に掲載した図も保存されている．imagesフォルダの中身は[こちら](https://drive.google.com/drive/folders/14WkUfFCoGn1lYxJVtgo9_5mV9uMtTM5r?usp=share_link)からダウンロードできる．
+
+# result
+
+学習済みモデルの，テストデータにおける損失などが保存されている．実験結果は[こちら](https://drive.google.com/drive/folders/1HUS4jLz-7bKBEKdcf_f4m9CmeSeEvrP_?usp=share_link)からダウンロードできる．
+
 # utils/datasets.py
 
 暗号資産取引所bybitから指定した期間の約定データをダウンロードし，点過程データに加工してcsvファイルをdataframesフォルダに保存する．
